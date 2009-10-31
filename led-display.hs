@@ -17,7 +17,9 @@
 import Data.Char as DC
 import Data.List as DL
 import Data.Map as DM
+import Data.Maybe
 import System.IO
+import Pixels
 
 type Word = [Char]
 
@@ -57,24 +59,10 @@ unparas = unlines . joinWith [] . map (map unwords)
 
 -}
 
-crearF t col = if DL.null ys then [(x,tail(xs))]
-                             else (x,tail(xs)):(crearF ys col)
-               where 
-                  x = head xs 
-                  (xs, ys) = splitAt (col+1) t
-
-columna :: String -> Int
-columna y = read $ (words y) !! 1
-
-font :: String -> DM.Map String [String]
-font t = do 
-          let x = lines t
-          let t = columna (head x)
-          fromList $ crearF (tail x) t
-					
+				
 main = do 
           let file = "font"
           text <- readFile file
-          let n = font text
-          putStrLn $ unlines $ concat $ DM.lookup "\"$\"" n 
+          let n = readFont text
+          putStrLn $ unlines $ fromJust $ DM.lookup '$' n 
           putStrLn "Se acabo" 

@@ -23,7 +23,7 @@ where
 
 import Data.Char as DC
 import Data.List as DL
-import Graphics.GCL
+import Graphics.HGL
 
 -- | DESCRIPCI&#211;N: Tipo de Datos que vamos a utilizar para imprimir 
 -- los mensajes en el LED DISPLAY. 
@@ -31,11 +31,25 @@ type Pixels = [[Pixel]]
 
 data Pixel = Empty | Pixel { on :: Boolean, color :: Color}
 
-font :: Map Char Pixels -> Char -> Pixels
-
-readFont :: Handle -> IO(Map Char Pixels)
-
 -- Convierto cada caracter en pixel
 convertPixels :: Char -> Pixel
 convertPixels x = if x == '*' then Pixel ( true, blanco)
                               else Pixel ( false, blanco)
+columna :: String -> Int
+columna y = read $ (words y) !! 1
+
+crearF t col = if (ys == []) then [(x,tail(xs))]
+                             else (x,tail(xs)):(crearF ys col)
+               where 
+                  (xs, ys) = splitAt (col+1) t
+                  x = head $ tail $ head xs 
+
+readFont :: String -> DM.Map Char [String]
+readFont t = do 
+            let x = lines t
+            let col = columna (head x)
+            fromList $ crearF (tail x) col
+	
+font :: Map Char Pixels -> Char -> Pixels
+
+
