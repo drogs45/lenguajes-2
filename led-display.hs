@@ -57,20 +57,24 @@ unparas = unlines . joinWith [] . map (map unwords)
 
 -}
 
-columna :: String -> Int
-columna y = read $ (words y) !! 1
-
 crearF t col = if DL.null ys then [(x,tail(xs))]
                              else (x,tail(xs)):(crearF ys col)
                where 
-                  x = head xs
+                  x = head xs 
                   (xs, ys) = splitAt (col+1) t
 
+columna :: String -> Int
+columna y = read $ (words y) !! 1
+
+font :: String -> DM.Map String [String]
+font t = do 
+          let x = lines t
+          let t = columna (head x)
+          fromList $ crearF (tail x) t
+					
 main = do 
           let file = "font"
-          text <- readFile file 
-          let x = lines text
-          let t = columna (head x)
-          let n = crearF (tail x) t
-          putStrLn $  (snd $ n !! 4) !! 0
+          text <- readFile file
+          let n = font text
+          putStrLn $ unlines $ concat $ DM.lookup "\"$\"" n 
           putStrLn "Se acabo" 
