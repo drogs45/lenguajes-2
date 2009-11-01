@@ -64,5 +64,5 @@ main = do
           let file = "font"
           text <- readFile file
           let n = readFont text
-          putStrLn $ unlines $ fromJust $ DM.lookup '$' n 
+--          putStrLn $ unlines $ fromJust $ DM.lookup '$' n 
           putStrLn "Se acabo" 
