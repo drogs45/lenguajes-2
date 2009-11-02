@@ -32,6 +32,7 @@ import Data.List as DL
 import Data.Map as DM
 import Data.Maybe 
 import Graphics.HGL
+import System.IO
 
 -- | DESCRIPCI&#211;N: Tipo de Datos que vamos a utilizar para imprimir 
 -- los mensajes en el LED DISPLAY. 
@@ -51,21 +52,22 @@ columna y = read $ (words y) !! 1
 
 --Imprimo los pixels a partir de un arreglo de string
 stringToPixel :: [Char] -> [Pixel]
-stringToPixel x = Prelude.map convertPixels $ x
+stringToPixel x = Prelude.map convertPixels x
 
 -- Construyo un arreglo
-crearF t col = if (ys == []) then [(x,Prelude.map stringToPixel $ tail $ xs)]
-                             else (x, Prelude.map stringToPixel $ tail $ xs):(crearF ys col)
+crearF t col = if (ys == []) then [(x,Prelude.map stringToPixel $ tail xs)]
+                             else (x, Prelude.map stringToPixel $ tail xs):(crearF ys col)
                where 
                   (xs, ys) = splitAt (col+1) t
                   x = head $ tail $ head xs 
 
 -- Recibe el archivo y devuelve el hash
-readFont :: String -> DM.Map Char Pixels
-readFont t = do 
-							let x = lines t
-							let col = columna (head x)
-							fromList $ crearF (tail x) col
+readFont :: Handle -> IO (DM.Map Char Pixels)
+readFont h = do 
+                t <- hGetContents h
+                let x = lines t
+                let col = columna (head x)
+                return $ fromList $ crearF (tail x) col
 
 -- Prende un Pixel
 pixelOn :: Pixel -> Pixel

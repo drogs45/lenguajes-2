@@ -62,7 +62,8 @@ unparas = unlines . joinWith [] . map (map unwords)
 				
 main = do 
           let file = "font"
-          text <- readFile file
-          let n = readFont text
+          h <- openFile file ReadMode 
+          n <- readFont h
+          --show $ fromJust $ DM.lookup '$' n
 --          putStrLn $ unlines $ fromJust $ DM.lookup '$' n 
           putStrLn "Se acabo" 
