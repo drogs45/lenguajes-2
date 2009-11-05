@@ -1,3 +1,4 @@
+
 {- |CI 3661 - TALLER DE LENGUAJES DE PROGRAMACION
  -
     PROYECTO 1
@@ -14,31 +15,82 @@
       
       *  Alfonso Ros 06-40254
 -}
-module Pixels (
-  Pixel(Empty,Pixel),
-  Pixels,
-  readFont,
-  concatPixels,
-  messageToPixels,
-  pixelListToPixels,
-  convertPixels,
-  stringToPixel,
-  on,
-  color,
-  font,
-  toIO,
-  pixelToPos,
-  leds
+
+module Effects (
+  readDisplayInfo
 )
 where
 
-import Data.Char as DC
-import Data.List as DL
-import Data.Map as DM
-import Data.Maybe 
+
+--import Data.Char as DC
+import Data.List
+--import Data.Map  as DM
+--import Data.Maybe 
 import Graphics.HGL
 import System.IO
+import Pixels
 
+data Effects   = Up 
+               | Down
+               | Left
+               | Right
+               | Backwards
+               | UpsideDown
+               | Invert
+               | Color Color
+               | Delay Integer
+               | Forever [Effects]
+               | Repeat Integer [Effects]
+               deriving(Show, Read, Eq)
+
+readDisplayInfo :: Handle -> IO (String, Effects)
+readDisplayInfo h = do
+                      str <- hGetLine h
+                      s <- hGetContents h
+                      let e = concat $ intersperse " " $ words s 
+                      let f = toEffectList e
+                      return (str, Repeat 1 f) 
+
+toEffectList :: String -> [Effects]
+toEffectList s = if xs == "" then [e]
+                             else  e:toEffectList xs
+                 where [(e, xs)] = reads s :: [(Effects, String)]
+
+--up :: Pixels -> Pixels
+up []     = []
+up (x:xs) = xs ++ [ x ]
+
+--down :: Pixels -> Pixels
+down [] = []
+down xs =  last xs : init xs 
+
+left :: Pixels -> Pixels
+left []     = []
+left (x:xs) = up x : left xs
+
+right :: Pixels -> Pixels
+right []     = []
+right (x:xs) = down x : right xs
+
+backwards :: Pixels -> Pixels
+backwards []     = []
+backwards (x:xs) = reverse x : backwards xs
+
+upsideDown :: Pixels -> Pixels
+upsideDown [] = []
+upsideDown xs = reverse xs
+
+invert :: Pixels -> Pixels
+invert []     = []
+invert (x:xs) = map inv x : invert xs
+              where
+                   inv p = if (on p)
+                              then Pixel False (color p)
+                              else Pixel True  (color p)
+
+--delay :: Int
+
+{-
 -- | DESCRIPCI&#211;N: Tipo de Datos que vamos a utilizar para imprimir 
 -- los mensajes en el LED DISPLAY. 
 type Pixels = [[Pixel]]
@@ -165,3 +217,4 @@ concatPixels      pl = DL.map DL.concat $ DL.transpose pl
 messageToPixels   :: DM.Map Char Pixels -> String -> Pixels
 messageToPixels _   ""   = []
 messageToPixels alf s    = concatPixels $ intersperse (font alf ' ') $ DL.map (font alf) s
+-}
