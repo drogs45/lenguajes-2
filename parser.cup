@@ -1,0 +1,118 @@
+//CUP specification for a simple expression evaluator (no actions)
+ 
+// Array of cuando se pasa como parametro ???
+// Distintos tipos en la asignacion..
+// Operaciones de float
+//switche
+ 
+import java_cup.runtime.*;
+ 
+/* Preliminaries to set up and use the scanner. */
+init with {: scanner.init(); :};
+scan with {: return scanner.next_token(); :};
+ 
+/* Terminals (tokens returned by the scanner). */
+terminal SEMI, PLUS, MINUS, TIMES, DIVIDE, MOD;
+terminal UMINUS, LPAREN, RPAREN;
+terminal VAR, MAIN, IGUAL, IF, ELSEIF, ELSE, SWITCH, CASE,
+DEFAULT, FOREACH, DO, IGUALIGUAL, LLLAVE, RLLAVE, LCORCHETE, RCORCHETE, PROC, RETURN, VOID,
+STRING, CHAR, BOOL, FLOAT, MENOR, MENORIGUAL, MAYOR, MAYORIGUAL,
+DISTINTO, II, I, O, OO, NEGACION,TRUE, FALSE, SUB, BREAK,
+PYC, COMA, DOSPUNTOS, MASMAS, MASIGUAL, MENOSMENOS,
+MENOSIGUAL,PUNTO, REF, IN;
+terminal ID, TKSTRING, TKENTERO, TKFLOAT, WHILE, FOR;
+terminal Integer ENTERO, NUMBER;
+ 
+/* Non terminals */
+non terminal s, tipo, param, inst, instS, declaracion, seleccion, extra, dec, asignacion, repeticion, guardia, masseleccion, instruccionIf, switche, case, rep1, rep2, rep3, repeat1, repeat2, comun, simboloComparacion, expr_list, expr_part;
+non terminal Integer expr;
+ 
+/* Precedences */
+precedence left PLUS, MINUS;
+precedence left TIMES, DIVIDE, MOD;
+precedence left UMINUS;
+ 
+/* The grammar */
+ 
+s ::= SUB tipo ID LPAREN param RPAREN LLLAVE inst RLLAVE PYC s
+  | SUB MAIN LLLAVE inst RLLAVE;
+ 
+tipo ::= ENTERO
+      | STRING
+      | CHAR
+      | BOOL
+      | FLOAT;
+ 
+param ::= param COMA tipo ID
+      | tipo ID;
+ 
+inst ::= inst PYC instS
+      | instS;
+ 
+instS ::= declaracion
+      | seleccion
+      | switche
+      | repeticion;
+ 
+declaracion ::= VAR dec DOSPUNTOS tipo PYC;
+ 
+dec ::= dec COMA extra
+     | extra;
+ 
+extra ::= ID
+      | asignacion;
+ 
+asignacion ::= ID LCORCHETE TKENTERO RCORCHETE IGUAL expr_list
+           | ID IGUAL TKSTRING
+           | ID IGUAL expr_list;
+ 
+seleccion ::= IF instruccionIf;
+ 
+instruccionIf ::= comun masseleccion;
+ 
+comun ::= LPAREN guardia RPAREN LLLAVE inst RLLAVE
+      | guardia LLLAVE inst RLLAVE
+      | LPAREN guardia RPAREN instS;
+ 
+masseleccion ::= ELSEIF instruccionIf
+             | ELSE LLLAVE inst RLLAVE
+             | ELSE instS;
+ 
+switche ::= SWITCH LPAREN guardia RPAREN LLLAVE case RLLAVE;
+ 
+case ::= CASE expr_list DOSPUNTOS inst CASE
+      | DEFAULT DOSPUNTOS inst;
+ 
+repeticion ::= rep1
+            | rep2
+            | rep3;
+ 
+rep1 ::= WHILE comun;
+ 
+rep2 ::= repeat1 LLLAVE inst RLLAVE
+      | repeat1 instS;
+ 
+repeat1 ::= FOR LPAREN ID IGUAL expr_list COMA guardia COMA ID
+simboloComparacion RPAREN;
+ 
+rep2 ::= repeat2 LLLAVE inst RLLAVE
+      | repeat2 instS;
+ 
+repeat2 ::= FOREACH LPAREN ID IN ID RPAREN;
+ 
+guardia ::= TKENTERO;
+ 
+expr_list ::= expr_list expr_part |
+              expr_part;
+expr_part ::= expr SEMI;
+expr ::= expr PLUS expr
+          | expr MINUS expr
+          | expr TIMES expr
+          | expr DIVIDE expr
+          | expr MOD expr
+          | MINUS expr %prec UMINUS
+          | LPAREN expr RPAREN
+          | TKENTERO
+          | TKFLOAT
+          ;
+ 
