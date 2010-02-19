@@ -306,28 +306,29 @@ class ASTMENOSIGUAL extends ASTBinario {
   } 
 }
 
-
-
 class SymTable {
   HashTable table;
+  SymTable prev;
 
-  public SymTable () {
-  table = new Hashtable();
+  public SymTable ( SymTable p) {
+  table = new Hashtable(); prev = p;
   }
 
   public HashTable getTable(){
     return table;
   }
 
-  void insert(String str, Sym s1){
+  void put(String str, Sym s1){
     table.put(str, s1);
   }
 
-  Object find(String str){
+  Sym find(String str){
+    for ( SymTable e = this ; e != null ; e = e.prev ){
+      Sym found = (Symbol) (e.getTable().get(s)) ;
+      if ( found ! = null ) 
+        return found;
+    }
     return table.get(str); 
   }
 
-  void merge(SymTable st1, SymTable st2){
-    st1.getTable().putAll(st2.getTable()); 
-  }
 }

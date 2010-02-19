@@ -15,11 +15,11 @@ terminal            MAIN, IGUAL, IF, ELSEIF, ELSE, SWITCH, CASE,
                     DIFERENTE, II, I, O, OO, NEGACION,TRUE, FALSE, SUB, BREAK,
                     PYC, COMA, DOSPUNTOS, MASMAS, MASIGUAL, MENOSMENOS,
                     MENOSIGUAL,PUNTO, REF, IN;
-terminal            ID, TKSTRING, TKENTERO, TKFLOAT, WHILE, FOR, STRUCT;
+terminal            ID, TKSTRING, TKENTERO, TKFLOAT, WHILE, FOR;
 terminal Integer    ENTERO;
 
 /* Non terminals */
-non terminal            inicio, s, tipo, tipoP, param, inst, instS, declaracion, seleccion, extra, dec, asignacion, repeticion, guardia, elseif, instruccionIf, switche, case, rep1, rep2, rep3, repeat1, repeat2, comun, procedimiento, booleano, asignacionRara, instSR, instSRS, referencia, atributo, struct, expr;
+non terminal            inicio, s, bloque, tipo, tipoP, param, stmts, stmt, declaracion, seleccion, extra, dec, asignacion, repeticion, guardia, elseif, switche, case, rep1, rep2, rep3, repeat1, repeat2, procedimiento, booleano, asignacionRara, stmtR, stmtRS, referencia, atributo, expr,  inicia, iniciai,asignacion1;
 
 /* Precedences */
 precedence left II, I, OO, O; 
@@ -33,10 +33,13 @@ precedence left UMINUS;
 inicio ::= procedimiento:v1 s:v2              {: ASTBinario ast = new ASTBinario(v1,v2);:}
 ;
 
-s ::= SUB MAIN LLLAVE inst:v1 RLLAVE          {: result = new ASTUnario(v1);:}
+s ::= SUB MAIN bloque
 ;
 
-procedimiento ::= procedimiento:v1 SUB tipoP:v2 ID:v3 LPAREN param:v4 RPAREN LLLAVE inst:v5 RLLAVE PYC {: v1.insertaHijo(new ASTProc(v1,v2,v3));:}      
+bloque ::= LLLAVE stmts:v1 RLLAVE          {: result = new ASTUnario(v1);:}
+;
+
+procedimiento ::= procedimiento:v1 SUB tipoP:v2 ID:v3 LPAREN param:v4 RPAREN LLLAVE stmts:v5 RLLAVE PYC {: v1.insertaHijo(new ASTProc(v1,v2,v3));:}      
 |                                             {: result = new ASTMultiple();:}      
 ; 
 
@@ -46,14 +49,10 @@ tipoP ::= tipo:v1               {: result = new ASTUnario(v1);:}
 ;
 
 tipo ::= ENTERO:v1                {: result = new ASTEntero(v1);:}
-|  STRING:v1                      {: result = new ASTString(v1);:}
-|  CHAR:v1                        {: result = new ASTChar(v1);:}
+|  STRING:v1                         {: result = new ASTString(v1);:}
+|  CHAR:v1                                {: result = new ASTChar(v1);:}
 |  BOOL:v1                        {: result = new ASTBool(v1);:}
 |  FLOAT:v1                       {: result = new ASTFloat(v1);:}
-|   struct:v1                     {: result = new ASTUnario(v1);:}
-;
-
-struct ::= STRUCT LLLAVE declaracion:v1 RLLAVE    {: result = new ASTUnario(v1);:}    
 ;
 
 param ::= param:v1 COMA referencia:v2                   {: v1.insertaHijos(v2); :}
@@ -64,11 +63,11 @@ referencia ::= tipo:v1 ID:v2                                  {: result = new AS
 |   REF tipo:v1 ID:v2                                         {: result = new ASTTernario(REF,v1,v2);:}
 ;
 
-inst ::= inst:v1 instS:v2 PYC                                     {: v1.insertaHijo(v2);:}
-| instS:v1 PYC                                                    {: result = new ASTMultiple(v1);:}
+stmts ::= stmts:v1 stmt:v2 PYC                                     {: v1.insertaHijo(v2);:}
+| stmt:v1 PYC                                                    {: result = new ASTMultiple(v1);:}
 ;
 
-instS ::= declaracion:v1                                  {:result = new ASTUnario(v1);:}
+stmt ::= declaracion:v1                                 
 |   seleccion:v1                                          {:result = new ASTUnario(v1);:}
 |   switche:v1                                            {:result = new ASTUnario(v1);:}
 |   repeticion:v1                                         {:result = new ASTUnario(v1);:}
@@ -78,43 +77,49 @@ instS ::= declaracion:v1                                  {:result = new ASTUnar
 |   asignacionRara:v1                                     {:result = new ASTUnario(v1);:} 
 ;
 
-declaracion ::= tipo:v1 dec:v2 PYC                            {:result = new ASTBinario(v1,v2) ;:}
+declaracion ::= tipo:v1 dec:v2 PYC                           
 ;
 
-dec ::=  dec:v1 COMA extra:v2                                 {:  v1.insertaHijo(v2); :}
-|   extra:v1                                                  {:  result = new ASTMultiple(v1); :}
+dec ::=  dec:v1 COMA extra:v2                               
+|   extra:v1                                               
 ;
 
-extra ::= ID:v1                                                      {: result = new ASTUnario(v1);:}
-|  asignacion:v1                                                     {: result = new ASTUnario(v1);:}
+extra ::= ID:v1                                               
+|  asignacion1:v1                                             
 ;
 
-asignacion ::= ID:v1 LCORCHETE TKENTERO:v2 RCORCHETE IGUAL expr:v3          {: result = new ASTAsigArray(v1);:}
+inicia ::= LCORCHETE iniciai RCORCHETE
+;
+
+iniciai ::= iniciai COMA expr
+| expr
+;
+
+asignacion ::= asignacion1
+| ID:v1 LCORCHETE TKENTERO:v2 RCORCHETE IGUAL expr:v3
+;
+
+asignacion1 ::= ID:v1 LCORCHETE TKENTERO:v2 RCORCHETE IGUAL inicia:v3          {: result = new ASTAsigArray(v1);:}
 |   ID:v1 IGUAL TKSTRING:v2                                                 {: result = new ASTAsig(v1, v2);:}
 |   ID:v1 IGUAL expr:v2                                                     {: result = new ASTAsig(v1, v2);:}
 ;
 
-seleccion ::= IF instruccionIf:v1                                               {: result = new ASTUnario(v1);:}
+
+seleccion ::= IF LPAREN guardia:v1 RPAREN bloque:v2 elseif
+|   IF guardia:v1 bloque:v2 elseif
 ; 
 
-instruccionIf ::= comun:v1 elseif:v2                                       {: result = new Binario(v1, v2);:}
-;
-
-comun ::= LPAREN guardia:v1 RPAREN LLLAVE inst:v2 RLLAVE                    {: result = new ASTIf(v1, v2);:} 
-|   guardia:v1 LLLAVE inst:v2 RLLAVE                                        {: result = new ASTIf(v1, v2);:}                                  
-|   LPAREN guardia:v1 RPAREN instS:v2                                       {: result = new ASTIf(v1, v2);:} 
-;
-
-elseif ::= ELSEIF instruccionIf:v1                                          {:  result = new ASTUnario(v1);:}
-|   ELSE LLLAVE inst RLLAVE                                                 {:  result = new ASTUnario(v1);:}
-|   ELSE instS                                                              {:  result = new ASTUnario(v1);:}
+elseif ::= ELSEIF LPAREN guardia:v1 RPAREN bloque:v2 elseif
+|   ELSEIF guardia:v1 bloque:v2 elseif
+|   ELSE bloque 
+|                            
 ;
 
 switche ::= SWITCH LPAREN expr:v1 RPAREN LLLAVE case:v2 RLLAVE              {: result = new ASTSwitche(v1, v2);:}
 ;
 
-case ::= case:v1 CASE expr:v2 DOSPUNTOS inst:v3                             {: v1.insertaHijo(new ASTBinario(v2,v3));:}
-|   CASE expr:v1 DOSPUNTOS inst:v2                                          {: result = new ASTMultiple(new ASTBinario(v1,v2));:}
+case ::= case:v1 CASE expr:v2 DOSPUNTOS stmts:v3                             {: v1.insertaHijo(new ASTBinario(v2,v3));:}
+|   CASE expr:v1 DOSPUNTOS stmts:v2                                          {: result = new ASTMultiple(new ASTBinario(v1,v2));:}
 ;
 
 repeticion ::= rep1:v1                                                      {:  result = new ASTUnario(v1);:}
@@ -122,28 +127,30 @@ repeticion ::= rep1:v1                                                      {:  
 |  rep3:v1                                                                  {:  result = new ASTUnario(v1);:}
 ;
 
-rep1 ::= WHILE comun:v1                                                     {: result = new ASTWhile(v1);:}                                
+rep1 ::= WHILE LPAREN guardia:v1 RPAREN bloque:v2
+|   WHILE guardia:v1 LLLAVE stmts:v2 RLLAVE
 ;
 
 repeat1 ::= FOR LPAREN declaracion:v1 COMA guardia:v2 COMA asignacionRara:v3 RPAREN  {: result = new ASTForHeader(v1, v2, v3);:}   
+| FOR LPAREN declaracion:v1 COMA guardia:v2 COMA asignacion:v3 RPAREN  {: result = new ASTForHeader(v1, v2, v3);:}   
 ;
 
-rep2 ::= repeat1:v1 LLLAVE instSR:v2 RLLAVE                                 {:  result = new ASTFor(v1,v2);:}
-|  repeat1:v1 instSRS:v2                                                    {:  result = new ASTFor(v1,v2);:}
+rep2 ::= repeat1:v1 LLLAVE stmtR:v2 RLLAVE                                 {:  result = new ASTFor(v1,v2);:}
+|  repeat1:v1 stmtRS:v2                                                    {:  result = new ASTFor(v1,v2);:}
 ;
 
-rep3 ::= repeat2 LLLAVE instSR RLLAVE                                        {:  result = new ASTForEach(v1,v2);:}
-|  repeat2 instSRS                                                           {:  result = new ASTForEach(v1,v2);:}
+rep3 ::= repeat2 LLLAVE stmtR RLLAVE                                        {:  result = new ASTForEach(v1,v2);:}
+|  repeat2 stmtRS                                                           {:  result = new ASTForEach(v1,v2);:}
 ;
 
 repeat2 ::= FOREACH LPAREN ID IN ID RPAREN                                   {: result = new ASTForEachHeader(v1, v2, v3);:}   
 ;
 
-instSR ::= instSR:v1 instSRS:v2 PYC                                              {: v1.insertaHijos(v2);:}   
-|   instSRS:v1 PYC                                                               {:  result = new ASTMultiple(v1);:}
+stmtR ::= stmtR:v1 stmtRS:v2 PYC                                              {: v1.insertaHijos(v2);:}   
+|   stmtRS:v1 PYC                                                               {:  result = new ASTMultiple(v1);:}
 ;
 
-instSRS ::= instS:v1                                                          {:  result = new ASTUnario(v1);:}
+stmtRS ::= stmt:v1                                                          {:  result = new ASTUnario(v1);:}
 |   BREAK                                                                     {:  result = new ASTUnario(BREAK);:}
 ;
 

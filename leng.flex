@@ -1,19 +1,16 @@
 import java_cup.runtime.Symbol;
-
-%%
 %class Lexer
 %line
 %column
 %char
 %cup
-
 ALPHA=[A-Za-z]
 DIGIT=[0-9]
 NONNEWLINE_WHITE_SPACE_CHAR=[\ \t\b\012]
 WHITE_SPACE_CHAR=[\n\ \t\b\012]
 STRING_TEXT=(\\\"|[^\n\"]|\\{WHITE_SPACE_CHAR}+\\)*
 COMMENT_TEXT=([^/*\n]|[^*\n]"/"[^*\n]|[^/\n]"*"[^/\n]|"*"[^/\n]|"/"[^*\n])*
-
+ 
 %%
 
 <YYINITIAL> "main" 		{return (new Symbol(sym.MAIN);}
@@ -76,4 +73,4 @@ COMMENT_TEXT=([^/*\n]|[^*\n]"/"[^*\n]|[^/\n]"*"[^/\n]|"*"[^/\n]|"/"[^*\n])*
 <YYINITIAL> "in"      {return (new Symbol(sym.IN));}
 <YYINITIAL> {ALPHA}({ALPHA}|{DIGIT}|_)*		{return (new Symbol(yyline,yycolumn,"iden" ,yytext()));}
 <YYINITIAL> {NONNEWLINE_WHITE_SPACE_CHAR} {}
-<YYINITIAL> .					{System.out.println("No se reconocio "+yytext());}
+<YYINITIAL> .         {System.out.println("No se reconocio "+yytext());}
