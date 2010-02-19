@@ -1,118 +1,189 @@
 //CUP specification for a simple expression evaluator (no actions)
- 
-// Array of cuando se pasa como parametro ???
-// Distintos tipos en la asignacion..
-// Operaciones de float
-//switche
- 
+
 import java_cup.runtime.*;
- 
-/* Preliminaries to set up and use the scanner. */
-init with {: scanner.init(); :};
+
+/* Preliminaries to set up and use the scanner.  */
+init with {: scanner.init();              :};
 scan with {: return scanner.next_token(); :};
- 
+
 /* Terminals (tokens returned by the scanner). */
-terminal SEMI, PLUS, MINUS, TIMES, DIVIDE, MOD;
-terminal UMINUS, LPAREN, RPAREN;
-terminal VAR, MAIN, IGUAL, IF, ELSEIF, ELSE, SWITCH, CASE,
-DEFAULT, FOREACH, DO, IGUALIGUAL, LLLAVE, RLLAVE, LCORCHETE, RCORCHETE, PROC, RETURN, VOID,
-STRING, CHAR, BOOL, FLOAT, MENOR, MENORIGUAL, MAYOR, MAYORIGUAL,
-DISTINTO, II, I, O, OO, NEGACION,TRUE, FALSE, SUB, BREAK,
-PYC, COMA, DOSPUNTOS, MASMAS, MASIGUAL, MENOSMENOS,
-MENOSIGUAL,PUNTO, REF, IN;
-terminal ID, TKSTRING, TKENTERO, TKFLOAT, WHILE, FOR;
-terminal Integer ENTERO, NUMBER;
- 
+terminal            PLUS, MINUS, TIMES, DIVIDE, MOD;
+terminal            UMINUS, LPAREN, RPAREN;
+terminal            MAIN, IGUAL, IF, ELSEIF, ELSE, SWITCH, CASE,
+                    DEFAULT, FOREACH, IGUALIGUAL, LLLAVE, RLLAVE, LCORCHETE, RCORCHETE, RETURN, VOID,
+                    STRING, CHAR, BOOL, FLOAT, MENOR, MENORIGUAL, MAYOR, MAYORIGUAL,
+                    DIFERENTE, II, I, O, OO, NEGACION,TRUE, FALSE, SUB, BREAK,
+                    PYC, COMA, DOSPUNTOS, MASMAS, MASIGUAL, MENOSMENOS,
+                    MENOSIGUAL,PUNTO, REF, IN;
+terminal            ID, TKSTRING, TKENTERO, TKFLOAT, WHILE, FOR, STRUCT;
+terminal Integer    ENTERO;
+
 /* Non terminals */
-non terminal s, tipo, param, inst, instS, declaracion, seleccion, extra, dec, asignacion, repeticion, guardia, masseleccion, instruccionIf, switche, case, rep1, rep2, rep3, repeat1, repeat2, comun, simboloComparacion, expr_list, expr_part;
-non terminal Integer expr;
- 
+non terminal            inicio, s, tipo, tipoP, param, inst, instS, declaracion, seleccion, extra, dec, asignacion, repeticion, guardia, elseif, instruccionIf, switche, case, rep1, rep2, rep3, repeat1, repeat2, comun, procedimiento, booleano, asignacionRara, instSR, instSRS, referencia, atributo, struct, expr;
+
 /* Precedences */
+precedence left II, I, OO, O; 
+precedence left MAYORIGUAL, MENORIGUAL, MAYOR, MENOR, DIFERENTE, IGUAL;
 precedence left PLUS, MINUS;
 precedence left TIMES, DIVIDE, MOD;
 precedence left UMINUS;
- 
+
 /* The grammar */
- 
-s ::= SUB tipo ID LPAREN param RPAREN LLLAVE inst RLLAVE PYC s
-  | SUB MAIN LLLAVE inst RLLAVE;
- 
-tipo ::= ENTERO
-      | STRING
-      | CHAR
-      | BOOL
-      | FLOAT;
- 
-param ::= param COMA tipo ID
-      | tipo ID;
- 
-inst ::= inst PYC instS
-      | instS;
- 
-instS ::= declaracion
-      | seleccion
-      | switche
-      | repeticion;
- 
-declaracion ::= VAR dec DOSPUNTOS tipo PYC;
- 
-dec ::= dec COMA extra
-     | extra;
- 
-extra ::= ID
-      | asignacion;
- 
-asignacion ::= ID LCORCHETE TKENTERO RCORCHETE IGUAL expr_list
-           | ID IGUAL TKSTRING
-           | ID IGUAL expr_list;
- 
-seleccion ::= IF instruccionIf;
- 
-instruccionIf ::= comun masseleccion;
- 
-comun ::= LPAREN guardia RPAREN LLLAVE inst RLLAVE
-      | guardia LLLAVE inst RLLAVE
-      | LPAREN guardia RPAREN instS;
- 
-masseleccion ::= ELSEIF instruccionIf
-             | ELSE LLLAVE inst RLLAVE
-             | ELSE instS;
- 
-switche ::= SWITCH LPAREN guardia RPAREN LLLAVE case RLLAVE;
- 
-case ::= CASE expr_list DOSPUNTOS inst CASE
-      | DEFAULT DOSPUNTOS inst;
- 
-repeticion ::= rep1
-            | rep2
-            | rep3;
- 
-rep1 ::= WHILE comun;
- 
-rep2 ::= repeat1 LLLAVE inst RLLAVE
-      | repeat1 instS;
- 
-repeat1 ::= FOR LPAREN ID IGUAL expr_list COMA guardia COMA ID
-simboloComparacion RPAREN;
- 
-rep2 ::= repeat2 LLLAVE inst RLLAVE
-      | repeat2 instS;
- 
-repeat2 ::= FOREACH LPAREN ID IN ID RPAREN;
- 
-guardia ::= TKENTERO;
- 
-expr_list ::= expr_list expr_part |
-              expr_part;
-expr_part ::= expr SEMI;
-expr ::= expr PLUS expr
-          | expr MINUS expr
-          | expr TIMES expr
-          | expr DIVIDE expr
-          | expr MOD expr
-          | MINUS expr %prec UMINUS
-          | LPAREN expr RPAREN
-          | TKENTERO
-          | TKFLOAT
-          ;
- 
+
+inicio ::= procedimiento:v1 s:v2              {: ASTBinario ast = new ASTBinario(v1,v2);:}
+;
+
+s ::= SUB MAIN LLLAVE inst:v1 RLLAVE          {: result = new ASTUnario(v1);:}
+;
+
+procedimiento ::= procedimiento:v1 SUB tipoP:v2 ID:v3 LPAREN param:v4 RPAREN LLLAVE inst:v5 RLLAVE PYC {: v1.insertaHijo(new ASTProc(v1,v2,v3));:}      
+|                                             {: result = new ASTMultiple();:}      
+; 
+
+tipoP ::= tipo:v1               {: result = new ASTUnario(v1);:}
+|   VOID                        {: result = new ASTUnario(VOID);:}
+|   ID:v1                       {: result = new ASTUnario(v1);:}
+;
+
+tipo ::= ENTERO:v1                {: result = new ASTEntero(v1);:}
+|  STRING:v1                      {: result = new ASTString(v1);:}
+|  CHAR:v1                        {: result = new ASTChar(v1);:}
+|  BOOL:v1                        {: result = new ASTBool(v1);:}
+|  FLOAT:v1                       {: result = new ASTFloat(v1);:}
+|   struct:v1                     {: result = new ASTUnario(v1);:}
+;
+
+struct ::= STRUCT LLLAVE declaracion:v1 RLLAVE    {: result = new ASTUnario(v1);:}    
+;
+
+param ::= param:v1 COMA referencia:v2                   {: v1.insertaHijos(v2); :}
+|  referencia:v1                                        {: result = new ASTMultiple(v1) ;:}
+;
+
+referencia ::= tipo:v1 ID:v2                                  {: result = new ASTBinario(v1,v2);:}
+|   REF tipo:v1 ID:v2                                         {: result = new ASTTernario(REF,v1,v2);:}
+;
+
+inst ::= inst:v1 instS:v2 PYC                                     {: v1.insertaHijo(v2);:}
+| instS:v1 PYC                                                    {: result = new ASTMultiple(v1);:}
+;
+
+instS ::= declaracion:v1                                  {:result = new ASTUnario(v1);:}
+|   seleccion:v1                                          {:result = new ASTUnario(v1);:}
+|   switche:v1                                            {:result = new ASTUnario(v1);:}
+|   repeticion:v1                                         {:result = new ASTUnario(v1);:}
+|   asignacion:v1                                         {:result = new ASTUnario(v1);:}
+|   RETURN ID:v1                                          {:result = new ASTReturnUnario(v1); :} 
+|   RETURN                                                {:result = new ASTReturn(); :} 
+|   asignacionRara:v1                                     {:result = new ASTUnario(v1);:} 
+;
+
+declaracion ::= tipo:v1 dec:v2 PYC                            {:result = new ASTBinario(v1,v2) ;:}
+;
+
+dec ::=  dec:v1 COMA extra:v2                                 {:  v1.insertaHijo(v2); :}
+|   extra:v1                                                  {:  result = new ASTMultiple(v1); :}
+;
+
+extra ::= ID:v1                                                      {: result = new ASTUnario(v1);:}
+|  asignacion:v1                                                     {: result = new ASTUnario(v1);:}
+;
+
+asignacion ::= ID:v1 LCORCHETE TKENTERO:v2 RCORCHETE IGUAL expr:v3          {: result = new ASTAsigArray(v1);:}
+|   ID:v1 IGUAL TKSTRING:v2                                                 {: result = new ASTAsig(v1, v2);:}
+|   ID:v1 IGUAL expr:v2                                                     {: result = new ASTAsig(v1, v2);:}
+;
+
+seleccion ::= IF instruccionIf:v1                                               {: result = new ASTUnario(v1);:}
+; 
+
+instruccionIf ::= comun:v1 elseif:v2                                       {: result = new Binario(v1, v2);:}
+;
+
+comun ::= LPAREN guardia:v1 RPAREN LLLAVE inst:v2 RLLAVE                    {: result = new ASTIf(v1, v2);:} 
+|   guardia:v1 LLLAVE inst:v2 RLLAVE                                        {: result = new ASTIf(v1, v2);:}                                  
+|   LPAREN guardia:v1 RPAREN instS:v2                                       {: result = new ASTIf(v1, v2);:} 
+;
+
+elseif ::= ELSEIF instruccionIf:v1                                          {:  result = new ASTUnario(v1);:}
+|   ELSE LLLAVE inst RLLAVE                                                 {:  result = new ASTUnario(v1);:}
+|   ELSE instS                                                              {:  result = new ASTUnario(v1);:}
+;
+
+switche ::= SWITCH LPAREN expr:v1 RPAREN LLLAVE case:v2 RLLAVE              {: result = new ASTSwitche(v1, v2);:}
+;
+
+case ::= case:v1 CASE expr:v2 DOSPUNTOS inst:v3                             {: v1.insertaHijo(new ASTBinario(v2,v3));:}
+|   CASE expr:v1 DOSPUNTOS inst:v2                                          {: result = new ASTMultiple(new ASTBinario(v1,v2));:}
+;
+
+repeticion ::= rep1:v1                                                      {:  result = new ASTUnario(v1);:}
+|  rep2:v1                                                                  {:  result = new ASTUnario(v1);:}
+|  rep3:v1                                                                  {:  result = new ASTUnario(v1);:}
+;
+
+rep1 ::= WHILE comun:v1                                                     {: result = new ASTWhile(v1);:}                                
+;
+
+repeat1 ::= FOR LPAREN declaracion:v1 COMA guardia:v2 COMA asignacionRara:v3 RPAREN  {: result = new ASTForHeader(v1, v2, v3);:}   
+;
+
+rep2 ::= repeat1:v1 LLLAVE instSR:v2 RLLAVE                                 {:  result = new ASTFor(v1,v2);:}
+|  repeat1:v1 instSRS:v2                                                    {:  result = new ASTFor(v1,v2);:}
+;
+
+rep3 ::= repeat2 LLLAVE instSR RLLAVE                                        {:  result = new ASTForEach(v1,v2);:}
+|  repeat2 instSRS                                                           {:  result = new ASTForEach(v1,v2);:}
+;
+
+repeat2 ::= FOREACH LPAREN ID IN ID RPAREN                                   {: result = new ASTForEachHeader(v1, v2, v3);:}   
+;
+
+instSR ::= instSR:v1 instSRS:v2 PYC                                              {: v1.insertaHijos(v2);:}   
+|   instSRS:v1 PYC                                                               {:  result = new ASTMultiple(v1);:}
+;
+
+instSRS ::= instS:v1                                                          {:  result = new ASTUnario(v1);:}
+|   BREAK                                                                     {:  result = new ASTUnario(BREAK);:}
+;
+
+guardia ::= guardia:v1 II booleano:v2     {: result = new ASTConjC(v1, v2);:} 
+        | guardia:v1 OO booleano:v2       {: result = new ASTDisyC(v1, v2);:} 
+        | guardia:v1 I booleano:v2        {: result = new ASTConj(v1, v2);:} 
+        | guardia:v1 O booleano:v2        {: result = new ASTDisy(v1, v2);:} 
+        | NEGACION guardia:v1             {: result = new ASTNeg(val[1]);:}
+        | booleano                      
+;
+
+booleano::= expr:v1 MAYOR      expr:v2              {: result = new ASTLeq(v1, v2);:}   
+        | expr:v1 MENOR      expr:v2              {: result = new ASTGeq(v1, v2);:}   
+        | expr:v1 IGUALIGUAL expr:v2              {: result = new ASTEqual(v1, v2);:} 
+        | expr:v1 DIFERENTE  expr:v2              {: result = new ASTDif(v1, v2);:}   
+        | expr:v1 MAYORIGUAL expr:v2              {: result = new ASTLess(v1, v2);:}  
+        | expr:v1 MENORIGUAL expr:v2              {: result = new ASTGreat(v1, v2);:} 
+        | TRUE:v1                                    {: result = new ASTExpBool(v1);:} 
+        | FALSE:v1                                   {: result = new ASTExpBool(v1);:} 
+;
+
+asignacionRara  ::= ID:v1 MASMAS                        {: result = new ASTMASMAS(v1);:}  
+|   ID:v1 MASIGUAL expr:v2                              {: result = new ASTMASIGUAL(v1, v2);:}  
+|   ID:v1 MENOSIGUAL expr:v2                            {: result = new ASTMENOSIGUAL(v1, v2);:}  
+|   ID:v1 MENOSMENOS                                    {: result = new ASTMENOSMENOS(v1);:} 
+; 
+
+expr      ::= expr:e1 PLUS expr:e2  {: result = new ASTSuma(e1,e2);:} 
+| expr:e1 MINUS expr:e2             {: result = new ASTResta(e1,e2);:} 
+| expr:e1 TIMES expr:e2             {: result = new ASTMult(e1,e2);:} 
+| expr:e1 DIVIDE expr:e2            {: result = new ASTDiv(e1,e2);:}  
+| expr:e1 MOD expr:e2               {: result = new ASTMod(e1,e2);:}  
+| MINUS expr:e1                     {: result = new ASTResUnario(e1);:} %prec UMINUS 
+| TKENTERO:e1                       {: result = new ASTEntero(e1);:} 
+| TKFLOAT:e1                        {: result = new ASTFlotante(e1);:} 
+| atributo                         
+;
+
+atributo ::= atributo PUNTO ID
+| ID
+| ID LCORCHETE expr RCORCHETE 
+;
+
